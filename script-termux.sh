@@ -89,7 +89,7 @@ echo "Escolha o Desktop:"
 echo "1) XFCE4 (recomendado)"
 echo "2) LXQt (leve)"
 echo "3) MATE (médio)"
-echo "4) KDE (pesado)"
+echo "4) KDE Plasma (experimental/requer muita RAM)"
 read -p "Opção [1-4, padrão=1]: " DE_INPUT
 DE_INPUT=${DE_INPUT:-1}
 
@@ -100,6 +100,10 @@ case $DE_INPUT in
     4) DE_NAME="KDE Plasma";;
 esac
 echo "Selecionado: $DE_NAME"
+
+echo ""
+read -p "Instalar Wine/Hangover? [s/N]: " INSTALL_WINE
+INSTALL_WINE=$(echo "$INSTALL_WINE" | tr '[:upper:]' '[:lower:]')
 
 # ============== INSTALAÇÃO (11 PASSOS) ==============
 TOTAL=11
@@ -154,10 +158,21 @@ pkg install -y -q python >> $LOG 2>&1
 pip install flask >> $LOG 2>&1
 
 # Passo 9
-CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Wine"
-pkg remove -y wine-stable >> $LOG 2>&1
-pkg install -y -q hangover-wine hangover-wowbox64 >> $LOG 2>&1
-ln -sf /data/data/com.termux/files/usr/opt/hangover-wine/bin/wine /data/data/com.termux/files/usr/bin/wine 2>/dev/null
+CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Configurando Wine"
+
+if [[ "$INSTALL_WINE" == "s" ]]; then
+    pkg remove -y wine-stable >> $LOG 2>&1
+
+    pkg install -y hangover-wine hangover-wowbox64 >> $LOG 2>&1
+
+    ln -sf \
+    /data/data/com.termux/files/usr/opt/hangover-wine/bin/wine \
+    /data/data/com.termux/files/usr/bin/wine 2>/dev/null
+
+    echo "Wine instalado"
+else
+    echo "Wine ignorado"
+fi
 
 # Passo 10
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Criando scripts"
