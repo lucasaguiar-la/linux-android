@@ -150,7 +150,7 @@ pkg install -y -q pulseaudio >> $LOG 2>&1
 
 # Passo 7
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando apps"
-pkg install -y -q firefox vlc git wget curl >> $LOG 2>&1
+pkg install -y -q firefox vlc git wget curl leafpad code-oss >> $LOG 2>&1
 
 # Passo 8
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Python"
@@ -178,13 +178,24 @@ fi
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Criando scripts"
 cat > ~/start-linux.sh << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
+
 pkill -9 -f "termux.x11" 2>/dev/null
 pulseaudio --kill 2>/dev/null
+
 sleep 1
-pulseaudio --start --exit-idle-time=-1
+
+export XDG_RUNTIME_DIR=${TMPDIR}
+
+pulseaudio --start \
+ --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" \
+ --exit-idle-time=-1
+
 export PULSE_SERVER=127.0.0.1
-termux-x11 :0 -ac &
+
+termux-x11 :0 >/dev/null 2>&1 &
+
 sleep 2
+
 export DISPLAY=:0
 EOF
 
@@ -226,4 +237,6 @@ echo ""
 echo "Para iniciar o desktop: ./start-linux.sh"
 echo "Para parar: ./stop-linux.sh"
 echo "Abra o app Termux-X11 para ver a interface"
+echo ""
+echo "Log da instalação: $LOG"
 echo ""
