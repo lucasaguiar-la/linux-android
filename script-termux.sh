@@ -26,6 +26,21 @@ install_pkg() {
 
 # ============== DETECÇÃO DO DISPOSITIVO ==============
 echo "=== Configurando Termux Linux ==="
+echo "Verificando internet..."
+
+ping -c 1 google.com > /dev/null 2>&1 || {
+    echo "Sem conexão com internet"
+    exit 1
+}
+
+ARCH=$(uname -m)
+
+echo "Arquitetura: $ARCH"
+
+if [[ "$ARCH" != "aarch64" ]]; then
+    echo "AVISO: Wine funciona melhor em ARM64"
+fi
+
 echo ""
 
 DEVICE_BRAND=$(getprop ro.product.brand 2>/dev/null || echo "Unknown")
