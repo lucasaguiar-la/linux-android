@@ -119,7 +119,11 @@ pkg install -y -q x11-repo tur-repo >> $LOG 2>&1
 
 # Passo 3
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando servidor gráfico"
-pkg install -y -q termux-x11-nightly xorg-xrandr >> $LOG 2>&1
+pkg install -y termux-x11 xorg-xrandr >> $LOG 2>&1
+
+if [ $? -ne 0 ]; then
+    pkg install -y termux-x11-nightly >> $LOG 2>&1
+fi
 
 # Passo 4
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando $DE_NAME"
@@ -127,7 +131,7 @@ case $DE_INPUT in
     1) install_pkg "xfce4 xfce4-terminal xfce4-whiskermenu-plugin plank-reloaded thunar mousepad";;
     2) install_pkg "lxqt qterminal pcmanfm-qt featherpad";;
     3) install_pkg "mate mate-tweak plank-reloaded mate-terminal";;
-    4) install_pkg "plasma-desktop konsole dolphin";;
+    4) install_pkg "plasma-desktop konsole dolphin dbus";;
 esac
 
 # Passo 5
@@ -150,11 +154,17 @@ pkg install -y -q pulseaudio >> $LOG 2>&1
 
 # Passo 7
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando apps"
-pkg install -y -q firefox vlc git wget curl leafpad code-oss >> $LOG 2>&1
+pkg install -y -q vlc git wget curl leafpad code-oss >> $LOG 2>&1
+pkg install -y firefox >> $LOG 2>&1
+
+if [ $? -ne 0 ]; then
+    echo "Firefox não disponível neste dispositivo"
+fi
 
 # Passo 8
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Python"
 pkg install -y -q python >> $LOG 2>&1
+pip install --upgrade pip >> $LOG 2>&1
 pip install flask >> $LOG 2>&1
 
 # Passo 9
@@ -186,6 +196,10 @@ sleep 1
 
 export XDG_RUNTIME_DIR=${TMPDIR}
 
+export DISPLAY=:0
+export QT_X11_NO_MITSHM=1
+export XDG_SESSION_TYPE=x11
+
 pulseaudio --start \
  --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" \
  --exit-idle-time=-1
@@ -199,6 +213,10 @@ sleep 2
 export DISPLAY=:0
 EOF
 
+if [ "$GPU_ENABLED" == "true" ]; then
+    echo "export GALLIUM_DRIVER=zink" >> ~/start-linux.sh
+fi
+
 if [ "$DE_INPUT" == "1" ]; then
     echo "exec startxfce4" >> ~/start-linux.sh
 elif [ "$DE_INPUT" == "2" ]; then
@@ -206,7 +224,7 @@ elif [ "$DE_INPUT" == "2" ]; then
 elif [ "$DE_INPUT" == "3" ]; then
     echo "exec mate-session" >> ~/start-linux.sh
 else
-    echo "exec startplasma-x11" >> ~/start-linux.sh
+    echo "dbus-launch --exit-with-session startplasma-x11" >> ~/start-linux.sh
 fi
 
 chmod +x ~/start-linux.sh
