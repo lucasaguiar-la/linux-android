@@ -25,14 +25,41 @@ DEVICE_BRAND=$(getprop ro.product.brand 2>/dev/null || echo "Unknown")
 GPU_VENDOR=$(getprop ro.hardware.egl 2>/dev/null || echo "")
 
 echo "Dispositivo: $DEVICE_BRAND"
+echo ""
 
-if [[ "$GPU_VENDOR" == *"adreno"* ]] || [[ "$DEVICE_BRAND" == *"samsung"* ]]; then
-    GPU_DRIVER="freedreno"
-    echo "GPU: Adreno (aceleração ativada)"
-else
-    GPU_DRIVER="zink_native"
-    echo "GPU: Genérica (modo compatibilidade)"
-fi
+echo "Configuração de GPU:"
+echo "1) Automático (recomendado)"
+echo "2) Ativar aceleração GPU"
+echo "3) Desativar aceleração GPU"
+
+read -p "Opção [1-3, padrão=1]: " GPU_OPTION
+GPU_OPTION=${GPU_OPTION:-1}
+
+case $GPU_OPTION in
+    1)
+        # Detecção automática
+        if [[ "$GPU_VENDOR" == *"adreno"* ]] || [[ "$DEVICE_BRAND" == *"samsung"* ]]; then
+            GPU_DRIVER="freedreno"
+            GPU_ENABLED="true"
+            echo "GPU: Adreno (aceleração ativada)"
+        else
+            GPU_DRIVER="zink_native"
+            GPU_ENABLED="false"
+            echo "GPU: Compatibilidade sem aceleração"
+        fi
+    ;;
+    
+    2)
+        GPU_DRIVER="freedreno"
+        GPU_ENABLED="true"
+        echo "GPU: aceleração forçada pelo usuário"
+    ;;
+    
+    3)
+        GPU_ENABLED="false"
+        echo "GPU: aceleração desativada"
+    ;;
+esac
 
 # ============== SELEÇÃO DO DESKTOP ==============
 echo ""
@@ -80,8 +107,17 @@ esac
 
 # Passo 5
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando drivers GPU"
-apt-get install -y -q mesa-zink vulkan-loader-android > /dev/null 2>&1
-[ "$GPU_DRIVER" == "freedreno" ] && apt-get install -y -q mesa-vulkan-icd-freedreno > /dev/null 2>&1
+if [ "$GPU_ENABLED" == "true" ]; then
+    apt-get install -y -q mesa-zink vulkan-loader-android > /dev/null 2>&1
+
+    if [ "$GPU_DRIVER" == "freedreno" ]; then
+        apt-get install -y -q mesa-vulkan-icd-freedreno > /dev/null 2>&1
+    fi
+
+    echo "Aceleração GPU instalada"
+else
+    echo "Modo sem aceleração GPU"
+fi
 
 # Passo 6
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando áudio"
