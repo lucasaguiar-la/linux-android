@@ -28,7 +28,7 @@ install_pkg() {
 echo "=== Configurando Termux Linux ==="
 echo "Verificando internet..."
 
-ping -c 1 google.com > /dev/null 2>&1 || {
+ping -c 1 google.com >> $LOG 2>&1 || {
     echo "Sem conexão com internet"
     exit 1
 }
@@ -107,16 +107,15 @@ CURRENT=0
 
 # Passo 1
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Atualizando sistema"
-apt-get update -y -q > /dev/null 2>&1
-apt-get upgrade -y -q > /dev/null 2>&1
+pkg update -y >> $LOG 2>&1
 
 # Passo 2
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Adicionando repositórios"
-apt-get install -y -q x11-repo tur-repo > /dev/null 2>&1
+pkg install -y -q x11-repo tur-repo >> $LOG 2>&1
 
 # Passo 3
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando servidor gráfico"
-apt-get install -y -q termux-x11-nightly xorg-xrandr > /dev/null 2>&1
+pkg install -y -q termux-x11-nightly xorg-xrandr >> $LOG 2>&1
 
 # Passo 4
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando $DE_NAME"
@@ -130,10 +129,10 @@ esac
 # Passo 5
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando drivers GPU"
 if [ "$GPU_ENABLED" == "true" ]; then
-    apt-get install -y -q mesa-zink vulkan-loader-android > /dev/null 2>&1
+    pkg install -y -q mesa-zink vulkan-loader-android >> $LOG 2>&1
 
     if [ "$GPU_DRIVER" == "freedreno" ]; then
-        apt-get install -y -q mesa-vulkan-icd-freedreno > /dev/null 2>&1
+        pkg install -y -q mesa-vulkan-icd-freedreno >> $LOG 2>&1
     fi
 
     echo "Aceleração GPU instalada"
@@ -143,21 +142,21 @@ fi
 
 # Passo 6
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando áudio"
-apt-get install -y -q pulseaudio > /dev/null 2>&1
+pkg install -y -q pulseaudio >> $LOG 2>&1
 
 # Passo 7
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando apps"
-apt-get install -y -q firefox vlc git wget curl > /dev/null 2>&1
+pkg install -y -q firefox vlc git wget curl >> $LOG 2>&1
 
 # Passo 8
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Python"
-apt-get install -y -q python > /dev/null 2>&1
-pip install flask > /dev/null 2>&1
+pkg install -y -q python >> $LOG 2>&1
+pip install flask >> $LOG 2>&1
 
 # Passo 9
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Wine"
-apt-get remove -y wine-stable > /dev/null 2>&1
-apt-get install -y -q hangover-wine hangover-wowbox64 > /dev/null 2>&1
+pkg remove -y wine-stable >> $LOG 2>&1
+pkg install -y -q hangover-wine hangover-wowbox64 >> $LOG 2>&1
 ln -sf /data/data/com.termux/files/usr/opt/hangover-wine/bin/wine /data/data/com.termux/files/usr/bin/wine 2>/dev/null
 
 # Passo 10
