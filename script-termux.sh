@@ -12,9 +12,16 @@ print_step() {
     echo "[$1/$2] $3"
 } 
 
+LOG=~/termux-linux-install.log
+
 install_pkg() {
     echo "  -> Instalando $1..."
-    apt-get install -y -q $1 > /dev/null 2>&1
+
+    pkg install -y $1 >> $LOG 2>&1
+
+    if [ $? -ne 0 ]; then
+        echo "  -> Falha ao instalar: $1"
+    fi
 }
 
 # ============== DETECÇÃO DO DISPOSITIVO ==============
