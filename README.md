@@ -32,7 +32,7 @@ termux-setup-storage
 4. Em 'Opções do Desenvolvedor' desabilite a opção 'Desativar restrições de processos filhos' (ou 'Disable child process restrictions')
 5. Instale o git:
 ```bash
-apt install git
+pkg install git
 ```
 6. Clone este repositório:
 ```bash
