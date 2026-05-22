@@ -1,26 +1,25 @@
 #!/data/data/com.termux/files/usr/bin/bash
 
-# Script Linux simplificado para Termux
-
 # ============== CONFIGURAÇÃO BÁSICA ==============
 DE_CHOICE="1"
 DE_NAME="XFCE4"
 GPU_DRIVER=""
+GPU_ENABLED="false"
+INSTALL_WINE="n"
+
+LOG=~/termux-linux-install.log
 
 # ============== FUNÇÕES SIMPLIFICADAS ==============
 print_step() {
     echo "[$1/$2] $3"
-} 
-
-LOG=~/termux-linux-install.log
+}
 
 install_pkg() {
-    echo "  -> Instalando $1..."
-
-    pkg install -y $1 >> $LOG 2>&1
-
+    echo "  -> Instalando: $*"
+    pkg install -y "$@" >> "$LOG" 2>&1
     if [ $? -ne 0 ]; then
-        echo "  -> Falha ao instalar: $1"
+        echo "  -> Falha ao instalar: $*"
+        echo "  -> Veja o log em: $LOG"
     fi
 }
 
@@ -28,7 +27,7 @@ install_pkg() {
 echo "=== Configurando Termux Linux ==="
 echo "Verificando internet..."
 
-ping -c 1 google.com >> $LOG 2>&1 || {
+ping -c 1 google.com >> "$LOG" 2>&1 || {
     echo "Sem conexão com internet"
     exit 1
 }
@@ -94,16 +93,113 @@ read -p "Opção [1-4, padrão=1]: " DE_INPUT
 DE_INPUT=${DE_INPUT:-1}
 
 case $DE_INPUT in
-    1) DE_NAME="XFCE4";;
-    2) DE_NAME="LXQt";;
-    3) DE_NAME="MATE";;
-    4) DE_NAME="KDE Plasma";;
+    1)
+        DE_NAME="XFCE4"
+        DE_PACKAGES=(
+            xfce4
+            xfce4-terminal
+            xfce4-whiskermenu-plugin
+            xfce4-taskmanager
+            xfce4-notifyd
+            xfce4-pulseaudio-plugin
+            xfce4-power-manager
+            thunar
+            thunar-archive-plugin
+            tumbler
+            mousepad
+            plank-reloaded
+            dbus
+            dbus-x11
+            gtk3
+            shared-mime-info
+            adwaita-icon-theme
+            papirus-icon-theme
+            fontconfig
+            dejavu-fonts
+            pavucontrol
+            xorg-xhost
+            xorg-xrandr
+            xorg-xsetroot
+            xorg-xset
+        )
+    ;;
+    2)
+        DE_NAME="LXQt"
+        DE_PACKAGES=(
+            lxqt
+            qterminal
+            pcmanfm-qt
+            featherpad
+            openbox
+            dbus
+            dbus-x11
+            gtk3
+            shared-mime-info
+            adwaita-icon-theme
+            papirus-icon-theme
+            fontconfig
+            dejavu-fonts
+            pavucontrol
+            xorg-xhost
+            xorg-xrandr
+        )
+    ;;
+    3)
+        DE_NAME="MATE"
+        DE_PACKAGES=(
+            mate
+            mate-terminal
+            mate-tweak
+            caja
+            pluma
+            mate-power-manager
+            dbus
+            dbus-x11
+            gtk3
+            shared-mime-info
+            adwaita-icon-theme
+            papirus-icon-theme
+            fontconfig
+            dejavu-fonts
+            pavucontrol
+            xorg-xhost
+            xorg-xrandr
+        )
+    ;;
+    4)
+        DE_NAME="KDE Plasma"
+        DE_PACKAGES=(
+            plasma-desktop
+            konsole
+            dolphin
+            kate
+            kde-cli-tools
+            dbus
+            dbus-x11
+            gtk3
+            shared-mime-info
+            adwaita-icon-theme
+            papirus-icon-theme
+            fontconfig
+            dejavu-fonts
+            pavucontrol
+            xorg-xhost
+            xorg-xrandr
+        )
+    ;;
 esac
-echo "Selecionado: $DE_NAME"
 
+echo "Selecionado: $DE_NAME"
 echo ""
+
 read -p "Instalar Wine/Hangover? [s/N]: " INSTALL_WINE
 INSTALL_WINE=$(echo "$INSTALL_WINE" | tr '[:upper:]' '[:lower:]')
+
+# ============== AJUSTES DE AMBIENTE ==============
+export LANG=pt_BR.UTF-8
+export LC_ALL=pt_BR.UTF-8
+export TMPDIR=${TMPDIR:-$PREFIX/tmp}
+mkdir -p "$TMPDIR"
 
 # ============== INSTALAÇÃO (11 PASSOS) ==============
 TOTAL=11
@@ -115,32 +211,27 @@ pkg update -y >> $LOG 2>&1
 
 # Passo 2
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Adicionando repositórios"
-pkg install -y -q x11-repo tur-repo >> $LOG 2>&1
+pkg install -y -q x11-repo tur-repo >> "$LOG" 2>&1
 
 # Passo 3
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando servidor gráfico"
-pkg install -y termux-x11 xorg-xrandr >> $LOG 2>&1
+pkg install -y termux-x11 xorg-xrandr >> "$LOG" 2>&1
 
 if [ $? -ne 0 ]; then
-    pkg install -y termux-x11-nightly >> $LOG 2>&1
+    pkg install -y termux-x11-nightly >> "$LOG" 2>&1
 fi
 
 # Passo 4
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando $DE_NAME"
-case $DE_INPUT in
-    1) install_pkg "xfce4 xfce4-terminal xfce4-whiskermenu-plugin plank-reloaded thunar mousepad";;
-    2) install_pkg "lxqt qterminal pcmanfm-qt featherpad";;
-    3) install_pkg "mate mate-tweak plank-reloaded mate-terminal";;
-    4) install_pkg "plasma-desktop konsole dolphin dbus";;
-esac
+install_pkg "${DE_PACKAGES[@]}"
 
 # Passo 5
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando drivers GPU"
 if [ "$GPU_ENABLED" == "true" ]; then
-    pkg install -y -q mesa-zink vulkan-loader-android >> $LOG 2>&1
+    pkg install -y -q mesa-zink vulkan-loader-android >> "$LOG" 2>&1
 
     if [ "$GPU_DRIVER" == "freedreno" ]; then
-        pkg install -y -q mesa-vulkan-icd-freedreno >> $LOG 2>&1
+        pkg install -y -q mesa-vulkan-icd-freedreno >> "$LOG" 2>&1
     fi
 
     echo "Aceleração GPU instalada"
@@ -154,8 +245,8 @@ pkg install -y -q pulseaudio >> $LOG 2>&1
 
 # Passo 7
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando apps"
-pkg install -y -q vlc git wget curl leafpad code-oss >> $LOG 2>&1
-pkg install -y firefox >> $LOG 2>&1
+pkg install -y -q vlc git wget curl leafpad code-oss wol >> "$LOG" 2>&1
+pkg install -y firefox >> "$LOG" 2>&1
 
 if [ $? -ne 0 ]; then
     echo "Firefox não disponível neste dispositivo"
@@ -163,17 +254,16 @@ fi
 
 # Passo 8
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Python"
-pkg install -y -q python >> $LOG 2>&1
-pip install --upgrade pip >> $LOG 2>&1
-pip install flask >> $LOG 2>&1
+pkg install -y -q python >> "$LOG" 2>&1
+pip install --upgrade pip >> "$LOG" 2>&1
+pip install flask >> "$LOG" 2>&1
 
 # Passo 9
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Configurando Wine"
 
 if [[ "$INSTALL_WINE" == "s" ]]; then
-    pkg remove -y wine-stable >> $LOG 2>&1
-
-    pkg install -y hangover-wine hangover-wowbox64 >> $LOG 2>&1
+    pkg remove -y wine-stable >> "$LOG" 2>&1
+    pkg install -y hangover-wine hangover-wowbox64 >> "$LOG" 2>&1
 
     ln -sf \
     /data/data/com.termux/files/usr/opt/hangover-wine/bin/wine \
@@ -194,18 +284,23 @@ pulseaudio --kill 2>/dev/null
 
 sleep 1
 
-export XDG_RUNTIME_DIR=${TMPDIR}
+export LANG=pt_BR.UTF-8
+export LC_ALL=pt_BR.UTF-8
+export TMPDIR=${TMPDIR:-/data/data/com.termux/files/usr/tmp}
+mkdir -p "$TMPDIR"
 
+export XDG_RUNTIME_DIR=${TMPDIR}
 export DISPLAY=:0
 export QT_X11_NO_MITSHM=1
 export XDG_SESSION_TYPE=x11
 
 pulseaudio --start \
- --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" \
- --exit-idle-time=-1
+  --load="module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1" \
+  --exit-idle-time=-1
 
 export PULSE_SERVER=127.0.0.1
 
+am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity >/dev/null 2>&1
 termux-x11 :0 >/dev/null 2>&1 &
 
 sleep 2
@@ -217,15 +312,20 @@ if [ "$GPU_ENABLED" == "true" ]; then
     echo "export GALLIUM_DRIVER=zink" >> ~/start-linux.sh
 fi
 
-if [ "$DE_INPUT" == "1" ]; then
-    echo "exec startxfce4" >> ~/start-linux.sh
-elif [ "$DE_INPUT" == "2" ]; then
-    echo "exec startlxqt" >> ~/start-linux.sh
-elif [ "$DE_INPUT" == "3" ]; then
-    echo "exec mate-session" >> ~/start-linux.sh
-else
-    echo "dbus-launch --exit-with-session startplasma-x11" >> ~/start-linux.sh
-fi
+case $DE_INPUT in
+    1)
+        echo "exec dbus-launch --exit-with-session startxfce4" >> ~/start-linux.sh
+    ;;
+    2)
+        echo "exec dbus-launch --exit-with-session startlxqt" >> ~/start-linux.sh
+    ;;
+    3)
+        echo "exec dbus-launch --exit-with-session mate-session" >> ~/start-linux.sh
+    ;;
+    4)
+        echo "exec dbus-launch --exit-with-session startplasma-x11" >> ~/start-linux.sh
+    ;;
+esac
 
 chmod +x ~/start-linux.sh
 
