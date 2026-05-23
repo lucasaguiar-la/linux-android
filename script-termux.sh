@@ -51,6 +51,26 @@ install_pkg() {
 trap '_stop_spinner' EXIT
 
 # ============== DETECÇÃO DO DISPOSITIVO ==============
+cat << 'EOF'
+    .·:'''''''''''''''''''''''''''''''''''''''''''''''''''''''''':·.
+    : :                                                          : :
+    : :             _        _                                   : :
+    : :            | |      (_)                                  : :
+    : :            | |       _  ____   _   _  _   _              : :
+    : :            | |      | ||  _ \ | | | |( \ / )             : :
+    : :            | |_____ | || | | || |_| | ) X (              : :
+    : :            |_______)|_||_| |_| \____|(_/ \_)             : :
+    : :                                                          : :
+    : :                          _                _      _       : :
+    : :         /\              | |              (_)    | |      : :
+    : :        /  \   ____    _ | |  ____   ___   _   _ | |      : :
+    : :       / /\ \ |  _ \  / || | / ___) / _ \ | | / || |      : :
+    : :      | |__| || | | |( (_| || |    | |_| || |( (_| |      : :
+    : :      |______||_| |_| \____||_|     \___/ |_| \____|      : :
+    : :                                                          : :
+    '·:..........................................................:·'
+EOF
+sleep 1.5
 echo "=== Configurando Termux Linux ==="
 echo "Verificando internet..."
 
@@ -213,10 +233,16 @@ export LC_ALL=C.UTF-8
 export TMPDIR=${TMPDIR:-$PREFIX/tmp}
 mkdir -p "$TMPDIR"
 
+# Forçar resposta automática para prompts de arquivos de configuração do dpkg
+mkdir -p "$PREFIX/etc/apt/apt.conf.d"
+printf 'DPkg::Options { "--force-confdef"; "--force-confold"; };\n' \
+    > "$PREFIX/etc/apt/apt.conf.d/99noninteractive"
+
 # ============== INSTALAÇÃO (11 PASSOS) ==============
 rm -f "$PREFIX/var/lib/dpkg/lock-frontend" \
       "$PREFIX/var/lib/dpkg/lock" \
-      "$PREFIX/var/cache/apt/archives/lock" 2>/dev/null || true
+      "$PREFIX/var/cache/apt/archives/lock" \
+      "/data/data/com.termux/cache/apt/archives/lock" 2>/dev/null || true
 dpkg --configure -a >> "$LOG" 2>&1 || true
 
 TOTAL=11
