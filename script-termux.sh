@@ -161,9 +161,10 @@ case $DE_INPUT in
     3)
         DE_NAME="MATE"
         DE_PACKAGES=(
-            mate
+            mate-session-manager
+            marco
+            mate-panel
             mate-terminal
-            caja
             dbus
             dbus-x11
             fontconfig
@@ -230,18 +231,22 @@ fi
 
 # Passo 4
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando $DE_NAME"
-install_pkg "${DE_PACKAGES[@]}"
+for _pkg in "${DE_PACKAGES[@]}"; do
+    pkg install -y "$_pkg" >> "$LOG" 2>&1 || echo "  -> Pacote não disponível: $_pkg"
+done
 
 # Passo 5
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando drivers GPU"
 if [ "$GPU_ENABLED" == "true" ]; then
-    pkg install -y -q mesa-zink vulkan-loader-android >> "$LOG" 2>&1
-
-    if [ "$GPU_DRIVER" == "freedreno" ]; then
-        pkg install -y -q mesa-vulkan-icd-freedreno >> "$LOG" 2>&1
+    if pkg install -y -q mesa-zink vulkan-loader-android >> "$LOG" 2>&1; then
+        if [ "$GPU_DRIVER" == "freedreno" ]; then
+            pkg install -y -q mesa-vulkan-icd-freedreno >> "$LOG" 2>&1 || true
+        fi
+        echo "Aceleração GPU instalada"
+    else
+        echo "Drivers GPU não disponíveis, continuando sem aceleração"
+        GPU_ENABLED="false"
     fi
-
-    echo "Aceleração GPU instalada"
 else
     echo "Modo sem aceleração GPU"
 fi
