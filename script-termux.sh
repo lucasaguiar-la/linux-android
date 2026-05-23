@@ -1,4 +1,5 @@
 #!/data/data/com.termux/files/usr/bin/bash
+set -e
 
 # ============== CONFIGURAÇÃO BÁSICA ==============
 DE_CHOICE="1"
@@ -19,7 +20,8 @@ install_pkg() {
     pkg install -y "$@" >> "$LOG" 2>&1
     if [ $? -ne 0 ]; then
         echo "  -> Falha ao instalar: $*"
-        echo "  -> Veja o log em: $LOG"
+        echo "Verifique o log: $LOG"
+        exit 1
     fi
 }
 
@@ -98,48 +100,32 @@ case $DE_INPUT in
         DE_PACKAGES=(
             xfce4
             xfce4-terminal
-            xfce4-whiskermenu-plugin
-            xfce4-taskmanager
-            xfce4-notifyd
-            xfce4-pulseaudio-plugin
-            xfce4-power-manager
             thunar
-            thunar-archive-plugin
-            tumbler
             mousepad
-            plank-reloaded
             dbus
-            dbus-x11
-            gtk3
-            shared-mime-info
-            adwaita-icon-theme
-            papirus-icon-theme
-            fontconfig
-            dejavu-fonts
-            pavucontrol
-            xorg-xhost
-            xorg-xrandr
-            xorg-xsetroot
-            xorg-xset
+            pulseaudio
+            termux-x11
         )
     ;;
     2)
         DE_NAME="LXQt"
         DE_PACKAGES=(
-            lxqt
-            qterminal
+            lxqt-panel
+            lxqt-session
             pcmanfm-qt
-            featherpad
+            qterminal
             openbox
+            featherpad
+        
             dbus
-            dbus-x11
+        
             gtk3
             shared-mime-info
-            adwaita-icon-theme
-            papirus-icon-theme
+        
             fontconfig
-            dejavu-fonts
+        
             pavucontrol
+        
             xorg-xhost
             xorg-xrandr
         )
@@ -196,8 +182,8 @@ read -p "Instalar Wine/Hangover? [s/N]: " INSTALL_WINE
 INSTALL_WINE=$(echo "$INSTALL_WINE" | tr '[:upper:]' '[:lower:]')
 
 # ============== AJUSTES DE AMBIENTE ==============
-export LANG=pt_BR.UTF-8
-export LC_ALL=pt_BR.UTF-8
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
 export TMPDIR=${TMPDIR:-$PREFIX/tmp}
 mkdir -p "$TMPDIR"
 
@@ -284,8 +270,8 @@ pulseaudio --kill 2>/dev/null
 
 sleep 1
 
-export LANG=pt_BR.UTF-8
-export LC_ALL=pt_BR.UTF-8
+export LANG=C.UTF-8
+export LC_ALL=C.UTF-8
 export TMPDIR=${TMPDIR:-/data/data/com.termux/files/usr/tmp}
 mkdir -p "$TMPDIR"
 
