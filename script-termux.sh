@@ -148,18 +148,14 @@ case $DE_INPUT in
             qterminal
             openbox
             featherpad
-        
             dbus
-        
             gtk3
             shared-mime-info
-        
             fontconfig
-        
             pavucontrol
-        
             xorg-xhost
             xorg-xrandr
+            xorg-xsetroot
         )
     ;;
     3)
@@ -167,19 +163,10 @@ case $DE_INPUT in
         DE_PACKAGES=(
             mate
             mate-terminal
-            mate-tweak
             caja
-            pluma
-            mate-power-manager
             dbus
             dbus-x11
-            gtk3
-            shared-mime-info
-            adwaita-icon-theme
-            papirus-icon-theme
             fontconfig
-            dejavu-fonts
-            pavucontrol
             xorg-xhost
             xorg-xrandr
         )
@@ -189,18 +176,9 @@ case $DE_INPUT in
         DE_PACKAGES=(
             plasma-desktop
             konsole
-            dolphin
-            kate
-            kde-cli-tools
             dbus
             dbus-x11
-            gtk3
-            shared-mime-info
-            adwaita-icon-theme
-            papirus-icon-theme
             fontconfig
-            dejavu-fonts
-            pavucontrol
             xorg-xhost
             xorg-xrandr
         )
@@ -342,6 +320,7 @@ case $DE_INPUT in
         echo "exec dbus-launch --exit-with-session startxfce4" >> ~/start-linux.sh
     ;;
     2)
+        echo "xsetroot -solid '#2e3440'" >> ~/start-linux.sh
         echo "exec dbus-launch --exit-with-session startlxqt" >> ~/start-linux.sh
     ;;
     3)
