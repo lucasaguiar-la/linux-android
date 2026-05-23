@@ -1,6 +1,21 @@
 # Projeto Android Linux - Termux
 
-## Descrição
+```ascii
+.·:'''''''''''''''''''''''''''''''''''''''''''''''''''''''''':·.
+: :                            _              _      _       : :
+: :          /\               | |            (_)    | |      : :
+: :         /  \    _ __    __| | _ __  ___   _   __| |      : :
+: :        / /\ \  | '_ \  / _` || '__|/ _ \ | | / _` |      : :
+: :       / ____ \ | | | || (_| || |  | (_) || || (_| |      : :
+: :      /_/    \_\|_| |_| \__,_||_|   \___/ |_| \__,_|      : :
+: :       _       _                                          : :
+: :      | |     (_)                                         : :
+: :      | |      _  _ __   _   _ __  __                     : :
+: :      | |     | || '_ \ | | | |\ \/ /                     : :
+: :      | |____ | || | | || |_| | >  <                      : :
+: :      |______||_||_| |_| \__,_|/_/\_\                     : :
+'·:..........................................................:·'
+```
 
 Script de configuração automatizada para instalar e gerenciar um ambiente Linux completo no Termux.
 
@@ -41,15 +56,16 @@ termux-setup-storage
 ```
 3. Desbloqueie o modo Desenvolvedor no seu aparelho
 4. Em 'Opções do Desenvolvedor' desabilite a opção 'Desativar restrições de processos filhos' (ou 'Disable child process restrictions')
-5. Instale o git:
+5. Instale e abra o [Termux X11](https://github.com/termux/termux-x11/releases/tag/nightly) pois essa será a interface gráfica
+6. Instale o git:
 ```bash
 pkg install git
 ```
-6. Clone este repositório:
+7. Clone este repositório:
 ```bash
 git clone https://github.com/lucasaguiar-la/linux-android.git
 ```
-7. Após execute:
+8. Após execute:
 ```bash
 # Acessa a pasta clonada
 cd linux-android
@@ -60,17 +76,19 @@ chmod +x script-termux.sh
 # Executa o script de instalação
 ./script-termux.sh
 ```
-8. Selecione a configuração de GPU, o ambiente desktop desejado e se deseja instalar o Wine (o script instala o Hangover Wine, variante compatível com ARM/Android)
-9. Aguarde a instalação ser concluída
-10. Inicie ou pare o desktop:
+9. Selecione a configuração de GPU, o ambiente desktop desejado e se deseja instalar o Wine (o script instala o Hangover Wine, variante compatível com ARM/Android)
+10. Aguarde a instalação ser concluída
+11. Inicie ou pare o desktop:
 ```bash
+# Volte para a home
+cd
+
 # Iniciar o desktop
 ~/start-linux.sh
 
 # Parar o desktop
 ~/stop-linux.sh
 ```
-11. Instale o [Termux X11](https://github.com/termux/termux-x11/releases/tag/nightly) para acessar a interface gráfica
 12. Abra o Termux X11 e o provedor gráfico já estará funcionando
 
 ## Requisitos
