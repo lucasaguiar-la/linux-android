@@ -9,7 +9,8 @@ Script de configuração automatizada para instalar e gerenciar um ambiente Linu
 - Detecção do dispositivo e GPU
 - Suporte a múltiplos ambientes desktop (XFCE4, LXQt, MATE, KDE)
 - Aceleração gráfica otimizada por GPU
-- Instalação simplificada e automatizada
+- Instalação simplificada e automatizada em 11 passos
+- Aplicativos pré-instalados: VLC, Code OSS, Firefox, Python, git, wget, curl
 - Compatibilidade com smartphones e tablets
 
 ## Ambientes Desktop Suportados
@@ -20,6 +21,16 @@ Script de configuração automatizada para instalar e gerenciar um ambiente Linu
 | LXQt    | Leve | Para dispositivos antigos |
 | MATE    | Médio | Alternativa estável |
 | KDE     | Pesado | Para dispositivos com mais RAM |
+
+## Aplicativos Instalados Automaticamente
+
+| Aplicativo | Descrição |
+|------------|-----------|
+| VLC | Player de mídia |
+| Code OSS | Editor de código (VS Code open source) |
+| Firefox | Navegador web (quando disponível no dispositivo) |
+| Python | Interpretador Python |
+| git, wget, curl | Ferramentas de linha de comando |
 
 ## Instalação
 
@@ -49,15 +60,15 @@ chmod +x script-termux.sh
 # Executa o script de instalação
 ./script-termux.sh
 ```
-8. Selecione a configuração de GPU, o ambiente desktop desejado e se deseja instalar o Wine (para apps Windows)
+8. Selecione a configuração de GPU, o ambiente desktop desejado e se deseja instalar o Wine (o script instala o Hangover Wine, variante compatível com ARM/Android)
 9. Aguarde a instalação ser concluída
-10. Rode o script:
+10. Inicie ou pare o desktop:
 ```bash
-# Volte para a home
-cd
+# Iniciar o desktop
+~/start-linux.sh
 
-# Execute o script
-./start-linux.sh
+# Parar o desktop
+~/stop-linux.sh
 ```
 11. Instale o [Termux X11](https://github.com/termux/termux-x11/releases/tag/nightly) para acessar a interface gráfica
 12. Abra o Termux X11 e o provedor gráfico já estará funcionando
@@ -75,10 +86,11 @@ cd
 - Use XFCE4 para melhor equilíbrio entre performance e funcionalidade
 - Dispositivos antigos: prefira LXQt
 - Dispositivos topo de linha: experimente KDE
-- Para executar automatizamente o `./start-linux.sh` toda vez que abrir o Termux, faça o seguinte:
+- Para iniciar o desktop automaticamente ao abrir o Termux, adicione ao `~/.bashrc`:
 ```bash
 nano ~/.bashrc
 
 # Cole o conteúdo abaixo:
-./start-linux.sh
+~/start-linux.sh
 ```
+- Em caso de falha durante a instalação, consulte o log em `~/termux-linux-install.log`

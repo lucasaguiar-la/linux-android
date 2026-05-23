@@ -24,10 +24,16 @@ _stop_spinner() {
 print_step() {
     _stop_spinner
     local pct=$(( $1 * 100 / $2 ))
-    echo "[$1/$2] $3"
+    local filled=$(( pct * 20 / 100 ))
+    local bar_fill=""
+    [ "$filled" -gt 0 ] && bar_fill=$(printf '%*s' "$filled" '' | tr ' ' '=')
+    local bar
+    [ "$filled" -lt 20 ] && bar=$(printf "%-20s" "${bar_fill}>") || bar="$bar_fill"
+    echo ""
+    echo "  [$1/$2] $3"
     ( i=0; chars='|/-\'
       while true; do
-          printf "\r  [%3d%%] %s" "$pct" "${chars:$((i%4)):1}"
+          printf "\r  [%-20s] %3d%% %s" "$bar" "$pct" "${chars:$((i%4)):1}"
           i=$((i+1))
           sleep 0.2
       done ) &
@@ -58,8 +64,11 @@ cat << 'EOF'
 EOF
 echo ""
 sleep 1.5
-echo "=== Configurando Termux Linux ==="
-echo "Verificando internet..."
+echo "  ================================="
+echo "      Configurando Termux Linux"
+echo "  ================================="
+echo ""
+echo "  Verificando internet..."
 
 ping -c 1 google.com >> "$LOG" 2>&1 || {
     echo "Sem conexão com internet"
@@ -67,27 +76,23 @@ ping -c 1 google.com >> "$LOG" 2>&1 || {
 }
 
 ARCH=$(uname -m)
-
-echo "Arquitetura: $ARCH"
-
-if [[ "$ARCH" != "aarch64" ]]; then
-    echo "AVISO: Wine funciona melhor em ARM64"
-fi
-
-echo ""
-
 DEVICE_BRAND=$(getprop ro.product.brand 2>/dev/null || echo "Unknown")
 GPU_VENDOR=$(getprop ro.hardware.egl 2>/dev/null || echo "")
 
-echo "Dispositivo: $DEVICE_BRAND"
+echo "  Arquitetura : $ARCH"
+echo "  Dispositivo : $DEVICE_BRAND"
+
+if [[ "$ARCH" != "aarch64" ]]; then
+    echo "  AVISO: Wine funciona melhor em ARM64"
+fi
+
 echo ""
-
-echo "Configuração de GPU:"
-echo "1) Automático (recomendado)"
-echo "2) Ativar aceleração GPU"
-echo "3) Desativar aceleração GPU"
-
-read -p "Opção [1-3, padrão=1]: " GPU_OPTION
+echo "  -- Configuração de GPU --"
+echo "   1) Automático (recomendado)"
+echo "   2) Ativar aceleração GPU"
+echo "   3) Desativar aceleração GPU"
+echo ""
+read -p "  Opção [1-3, padrão=1]: " GPU_OPTION
 GPU_OPTION=${GPU_OPTION:-1}
 
 case $GPU_OPTION in
@@ -118,12 +123,13 @@ esac
 
 # ============== SELEÇÃO DO DESKTOP ==============
 echo ""
-echo "Escolha o Desktop:"
-echo "1) XFCE4 (recomendado)"
-echo "2) LXQt (leve)"
-echo "3) MATE (médio)"
-echo "4) KDE Plasma (experimental/requer muita RAM)"
-read -p "Opção [1-4, padrão=1]: " DE_INPUT
+echo "  -- Escolha o Desktop --"
+echo "   1) XFCE4      (recomendado)"
+echo "   2) LXQt       (leve)"
+echo "   3) MATE       (médio)"
+echo "   4) KDE Plasma (experimental)"
+echo ""
+read -p "  Opção [1-4, padrão=1]: " DE_INPUT
 DE_INPUT=${DE_INPUT:-1}
 
 case $DE_INPUT in
@@ -186,10 +192,9 @@ case $DE_INPUT in
     ;;
 esac
 
-echo "Selecionado: $DE_NAME"
+echo "  -> Desktop: $DE_NAME"
 echo ""
-
-read -p "Instalar Wine/Hangover? [s/N]: " INSTALL_WINE
+read -p "  Instalar Wine/Hangover? [s/N]: " INSTALL_WINE
 INSTALL_WINE=$(echo "$INSTALL_WINE" | tr '[:upper:]' '[:lower:]')
 
 # ============== AJUSTES DE AMBIENTE ==============
@@ -250,6 +255,8 @@ if [ "$GPU_ENABLED" == "true" ]; then
 else
     echo "Modo sem aceleração GPU"
 fi
+
+pkg install -y neofetch
 
 # Passo 6
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando áudio"
@@ -359,12 +366,15 @@ chmod +x ~/Desktop/*.desktop 2>/dev/null
 
 # ============== FINALIZAÇÃO ==============
 _stop_spinner
+neofetch
 echo ""
-echo "=== INSTALAÇÃO CONCLUÍDA ==="
+echo "  ================================="
+echo "       INSTALAÇÃO CONCLUÍDA"
+echo "  ================================="
 echo ""
-echo "Para iniciar o desktop: ./start-linux.sh"
-echo "Para parar: ./stop-linux.sh"
-echo "Abra o app Termux-X11 para ver a interface"
+echo "  Iniciar : ~/start-linux.sh"
+echo "  Parar   : ~/stop-linux.sh"
 echo ""
-echo "Log da instalação: $LOG"
+echo "  Abra o app Termux-X11 para ver a interface"
+echo "  Log: $LOG"
 echo ""
