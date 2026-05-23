@@ -214,11 +214,10 @@ export TMPDIR=${TMPDIR:-$PREFIX/tmp}
 mkdir -p "$TMPDIR"
 
 # ============== INSTALAÇÃO (11 PASSOS) ==============
-pkill -9 apt 2>/dev/null || true
-pkill -9 dpkg 2>/dev/null || true
 rm -f "$PREFIX/var/lib/dpkg/lock-frontend" \
       "$PREFIX/var/lib/dpkg/lock" \
       "$PREFIX/var/cache/apt/archives/lock" 2>/dev/null || true
+dpkg --configure -a >> "$LOG" 2>&1 || true
 
 TOTAL=11
 CURRENT=0
