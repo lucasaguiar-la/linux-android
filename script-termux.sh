@@ -23,18 +23,14 @@ _stop_spinner() {
 
 print_step() {
     _stop_spinner
+    local pct=$(( $1 * 100 / $2 ))
     echo "[$1/$2] $3"
-    ( i=0
-        while true; do
-            case $((i % 4)) in
-                0) printf "\r  |" ;;
-                1) printf "\r  /" ;;
-                2) printf "\r  -" ;;
-                3) printf "\r  \\" ;;
-            esac
-            i=$((i+1))
-            sleep 0.2
-        done ) &
+    ( i=0; chars='|/-\'
+      while true; do
+          printf "\r  [%3d%%] %s" "$pct" "${chars:$((i%4)):1}"
+          i=$((i+1))
+          sleep 0.2
+      done ) &
     SPINNER_PID=$!
 }
 
