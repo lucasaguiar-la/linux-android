@@ -51,18 +51,16 @@ install_pkg() {
 trap '_stop_spinner' EXIT
 
 # ============== DETECÇÃO DO DISPOSITIVO ==============
+echo ""
 cat << 'EOF'
-    .·:''''''''''''''''''''''''''''''''''''''''''':·.
-    : :                                           : :
-    : :      |    | |\ | |  | \_/                 : :
-    : :      |___ | | \| \__/ / \                 : :
-    : :                                           : :
-    : :                 __   __   __     __       : :
-    : :       /\  |\ | |  \ |__) /  \ | |  \      : :
-    : :      /~~\ | \| |__/ |  \ \__/ | |__/      : :
-    : :                                           : :
-    '·:...........................................:·'
+|    | |\ | |  | \_/           
+|___ | | \| \__/ / \           
+                               
+           __   __   __     __ 
+ /\  |\ | |  \ |__) /  \ | |  \
+/~~\ | \| |__/ |  \ \__/ | |__/
 EOF
+echo ""
 sleep 1.5
 echo "=== Configurando Termux Linux ==="
 echo "Verificando internet..."
@@ -288,8 +286,6 @@ fi
 # Passo 8
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Python"
 pkg install -y -q python >> "$LOG" 2>&1
-pip install --upgrade pip >> "$LOG" 2>&1
-pip install flask >> "$LOG" 2>&1
 
 # Passo 9
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Configurando Wine"
