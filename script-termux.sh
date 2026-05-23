@@ -9,20 +9,46 @@ GPU_ENABLED="false"
 INSTALL_WINE="n"
 
 LOG=~/termux-linux-install.log
+SPINNER_PID=""
 
 # ============== FUNÇÕES SIMPLIFICADAS ==============
+_stop_spinner() {
+    if [ -n "$SPINNER_PID" ]; then
+        kill "$SPINNER_PID" 2>/dev/null || true
+        wait "$SPINNER_PID" 2>/dev/null || true
+        printf "\r\033[K"
+        SPINNER_PID=""
+    fi
+}
+
 print_step() {
+    _stop_spinner
     echo "[$1/$2] $3"
+    ( i=0
+        while true; do
+            case $((i % 4)) in
+                0) printf "\r  |" ;;
+                1) printf "\r  /" ;;
+                2) printf "\r  -" ;;
+                3) printf "\r  \\" ;;
+            esac
+            i=$((i+1))
+            sleep 0.2
+        done ) &
+    SPINNER_PID=$!
 }
 
 install_pkg() {
     echo "  -> Instalando: $*"
     if ! pkg install -y "$@" >> "$LOG" 2>&1; then
+        _stop_spinner
         echo "  -> Falha ao instalar: $*"
         echo "Verifique o log: $LOG"
         exit 1
     fi
 }
+
+trap '_stop_spinner' EXIT
 
 # ============== DETECÇÃO DO DISPOSITIVO ==============
 echo "=== Configurando Termux Linux ==="
@@ -181,6 +207,7 @@ read -p "Instalar Wine/Hangover? [s/N]: " INSTALL_WINE
 INSTALL_WINE=$(echo "$INSTALL_WINE" | tr '[:upper:]' '[:lower:]')
 
 # ============== AJUSTES DE AMBIENTE ==============
+export DEBIAN_FRONTEND=noninteractive
 export LANG=C.UTF-8
 export LC_ALL=C.UTF-8
 export TMPDIR=${TMPDIR:-$PREFIX/tmp}
@@ -192,7 +219,7 @@ CURRENT=0
 
 # Passo 1
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Atualizando sistema"
-pkg update -y >> "$LOG" 2>&1
+pkg upgrade -y >> "$LOG" 2>&1
 
 # Passo 2
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Adicionando repositórios"
@@ -331,6 +358,7 @@ EOF
 chmod +x ~/Desktop/*.desktop 2>/dev/null
 
 # ============== FINALIZAÇÃO ==============
+_stop_spinner
 echo ""
 echo "=== INSTALAÇÃO CONCLUÍDA ==="
 echo ""
