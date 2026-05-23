@@ -17,8 +17,7 @@ print_step() {
 
 install_pkg() {
     echo "  -> Instalando: $*"
-    pkg install -y "$@" >> "$LOG" 2>&1
-    if [ $? -ne 0 ]; then
+    if ! pkg install -y "$@" >> "$LOG" 2>&1; then
         echo "  -> Falha ao instalar: $*"
         echo "Verifique o log: $LOG"
         exit 1
@@ -193,18 +192,17 @@ CURRENT=0
 
 # Passo 1
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Atualizando sistema"
-pkg update -y >> $LOG 2>&1
+pkg update -y >> "$LOG" 2>&1
 
 # Passo 2
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Adicionando repositórios"
 pkg install -y -q x11-repo tur-repo >> "$LOG" 2>&1
+pkg update -y >> "$LOG" 2>&1
 
 # Passo 3
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando servidor gráfico"
-pkg install -y termux-x11 xorg-xrandr >> "$LOG" 2>&1
-
-if [ $? -ne 0 ]; then
-    pkg install -y termux-x11-nightly >> "$LOG" 2>&1
+if ! pkg install -y termux-x11 xorg-xrandr >> "$LOG" 2>&1; then
+    pkg install -y termux-x11-nightly xorg-xrandr >> "$LOG" 2>&1
 fi
 
 # Passo 4
@@ -227,14 +225,12 @@ fi
 
 # Passo 6
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando áudio"
-pkg install -y -q pulseaudio >> $LOG 2>&1
+pkg install -y -q pulseaudio >> "$LOG" 2>&1
 
 # Passo 7
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando apps"
 pkg install -y -q vlc git wget curl leafpad code-oss wol >> "$LOG" 2>&1
-pkg install -y firefox >> "$LOG" 2>&1
-
-if [ $? -ne 0 ]; then
+if ! pkg install -y firefox >> "$LOG" 2>&1; then
     echo "Firefox não disponível neste dispositivo"
 fi
 
