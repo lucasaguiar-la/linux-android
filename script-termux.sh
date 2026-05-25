@@ -1,75 +1,92 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -e
 
+SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
+
+# ============== PERMISSÃO DE ARMAZENAMENTO ==============
 echo ""
 echo "Solicitando permissão de armazenamento..."
 termux-setup-storage
 
-sleep 3
+echo "  Aguardando permissão de armazenamento..."
+timeout=30
+while [ $timeout -gt 0 ] && [ ! -d "$HOME/storage/shared" ]; do
+    sleep 1
+    timeout=$((timeout-1))
+done
 
 # ============== CONFIGURAÇÃO BÁSICA ==============
-DE_CHOICE="1"
 DE_NAME="XFCE4"
 GPU_DRIVER=""
 GPU_ENABLED="false"
 INSTALL_WINE="n"
-
 LOG=~/termux-linux-install.log
-SPINNER_PID=""
 
-# ============== FUNÇÕES SIMPLIFICADAS ==============
-_stop_spinner() {
-    if [ -n "$SPINNER_PID" ]; then
-        kill "$SPINNER_PID" 2>/dev/null || true
-        wait "$SPINNER_PID" 2>/dev/null || true
-        printf "\r\033[K"
-        SPINNER_PID=""
-    fi
-}
-
+# ============== FUNÇÕES ==============
 print_step() {
-    _stop_spinner
     local pct=$(( $1 * 100 / $2 ))
-    local filled=$(( pct * 20 / 100 ))
-    local bar_fill=""
-    [ "$filled" -gt 0 ] && bar_fill=$(printf '%*s' "$filled" '' | tr ' ' '=')
-    local bar
-    [ "$filled" -lt 20 ] && bar=$(printf "%-20s" "${bar_fill}>") || bar="$bar_fill"
     echo ""
-    echo "  [$1/$2] $3"
-    ( i=0; chars='|/-\'
-      while true; do
-          printf "\r  [%-20s] %3d%% %s" "$bar" "$pct" "${chars:$((i%4)):1}"
-          i=$((i+1))
-          sleep 0.2
-      done ) &
-    SPINNER_PID=$!
+    printf "  [%2d/%2d] %-35s %3d%%\n" "$1" "$2" "$3" "$pct"
 }
 
-install_pkg() {
-    echo "  -> Instalando: $*"
-    if ! pkg install -y "$@" >> "$LOG" 2>&1; then
-        _stop_spinner
-        echo "  -> Falha ao instalar: $*"
-        echo "Verifique o log: $LOG"
+run_cmd() {
+    local desc="$1"; shift
+    printf "    %s " "$desc"
+    "$@" >> "$LOG" 2>&1 &
+    local CMD_PID=$!
+    while kill -0 "$CMD_PID" 2>/dev/null; do
+        printf "."
+        sleep 1
+    done
+    local rc=0
+    wait "$CMD_PID" || rc=$?
+    if [ $rc -eq 0 ]; then
+        echo " OK"
+    else
+        echo " ERRO"
+        echo "  Verifique o log: $LOG"
         exit 1
     fi
 }
 
-trap '_stop_spinner' EXIT
+try_pkg() {
+    local pkgs="$*"
+    printf "    Instalando: %s " "$pkgs"
+    pkg install -y "$@" >> "$LOG" 2>&1 &
+    local CMD_PID=$!
+    while kill -0 "$CMD_PID" 2>/dev/null; do
+        printf "."
+        sleep 1
+    done
+    local rc=0
+    wait "$CMD_PID" || rc=$?
+    if [ $rc -eq 0 ]; then
+        echo " OK"
+        return 0
+    else
+        echo " N/D"
+        return 1
+    fi
+}
+
+install_pkg() {
+    if ! try_pkg "$@"; then
+        echo "  Verifique o log: $LOG"
+        exit 1
+    fi
+}
 
 # ============== DETECÇÃO DO DISPOSITIVO ==============
 echo ""
 cat << 'EOF'
-|    | |\ | |  | \_/           
-|___ | | \| \__/ / \           
-                               
-           __   __   __     __ 
+|    | |\ | |  | \_/
+|___ | | \| \__/ / \
+
+           __   __   __     __
  /\  |\ | |  \ |__) /  \ | |  \
 /~~\ | \| |__/ |  \ \__/ | |__/
 EOF
 echo ""
-sleep 1.5
 echo "  ================================="
 echo "      Configurando Termux Linux"
 echo "  ================================="
@@ -103,7 +120,6 @@ GPU_OPTION=${GPU_OPTION:-1}
 
 case $GPU_OPTION in
     1)
-        # Detecção automática
         if [[ "$GPU_VENDOR" == *"adreno"* ]] || [[ "$DEVICE_BRAND" == *"samsung"* ]]; then
             GPU_DRIVER="freedreno"
             GPU_ENABLED="true"
@@ -114,13 +130,11 @@ case $GPU_OPTION in
             echo "GPU: Compatibilidade sem aceleração"
         fi
     ;;
-    
     2)
         GPU_DRIVER="freedreno"
         GPU_ENABLED="true"
         echo "GPU: aceleração forçada pelo usuário"
     ;;
-    
     3)
         GPU_ENABLED="false"
         echo "GPU: aceleração desativada"
@@ -142,58 +156,28 @@ case $DE_INPUT in
     1)
         DE_NAME="XFCE4"
         DE_PACKAGES=(
-            xfce4
-            xfce4-terminal
-            thunar
-            mousepad
-            dbus
-            pulseaudio
-            termux-x11
+            xfce4 xfce4-terminal thunar mousepad dbus pulseaudio termux-x11
         )
     ;;
     2)
         DE_NAME="LXQt"
         DE_PACKAGES=(
-            lxqt-panel
-            lxqt-session
-            pcmanfm-qt
-            qterminal
-            openbox
-            featherpad
-            dbus
-            gtk3
-            shared-mime-info
-            fontconfig
-            pavucontrol
-            xorg-xhost
-            xorg-xrandr
-            xorg-xsetroot
+            lxqt-panel lxqt-session pcmanfm-qt qterminal openbox featherpad
+            dbus gtk3 shared-mime-info fontconfig pavucontrol
+            xorg-xhost xorg-xrandr xorg-xsetroot
         )
     ;;
     3)
         DE_NAME="MATE"
         DE_PACKAGES=(
-            mate-session-manager
-            marco
-            mate-panel
-            mate-terminal
-            dbus
-            dbus-x11
-            fontconfig
-            xorg-xhost
-            xorg-xrandr
+            mate-session-manager marco mate-panel mate-terminal
+            dbus dbus-x11 fontconfig xorg-xhost xorg-xrandr
         )
     ;;
     4)
         DE_NAME="KDE Plasma"
         DE_PACKAGES=(
-            plasma-desktop
-            konsole
-            dbus
-            dbus-x11
-            fontconfig
-            xorg-xhost
-            xorg-xrandr
+            plasma-desktop konsole dbus dbus-x11 fontconfig xorg-xhost xorg-xrandr
         )
     ;;
 esac
@@ -210,7 +194,6 @@ export LC_ALL=C.UTF-8
 export TMPDIR=${TMPDIR:-$PREFIX/tmp}
 mkdir -p "$TMPDIR"
 
-# Forçar resposta automática para prompts de arquivos de configuração do dpkg
 mkdir -p "$PREFIX/etc/apt/apt.conf.d"
 printf 'DPkg::Options { "--force-confdef"; "--force-confold"; };\n' \
     > "$PREFIX/etc/apt/apt.conf.d/99noninteractive"
@@ -227,82 +210,75 @@ CURRENT=0
 
 # Passo 1
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Atualizando sistema"
-pkg upgrade -y >> "$LOG" 2>&1
+run_cmd "Atualizando pacotes..." pkg upgrade -y
 
 # Passo 2
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Adicionando repositórios"
-pkg install -y -q x11-repo tur-repo >> "$LOG" 2>&1
-pkg update -y >> "$LOG" 2>&1
+run_cmd "Instalando: x11-repo tur-repo..." pkg install -y x11-repo tur-repo
+run_cmd "Atualizando listas de pacotes..." pkg update -y
 
 # Passo 3
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando servidor gráfico"
-if ! pkg install -y termux-x11 xorg-xrandr >> "$LOG" 2>&1; then
-    pkg install -y termux-x11-nightly xorg-xrandr >> "$LOG" 2>&1
+if ! try_pkg termux-x11 xorg-xrandr; then
+    install_pkg termux-x11-nightly xorg-xrandr
 fi
 
 # Passo 4
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando $DE_NAME"
 for _pkg in "${DE_PACKAGES[@]}"; do
-    pkg install -y "$_pkg" >> "$LOG" 2>&1 || echo "  -> Pacote não disponível: $_pkg"
+    try_pkg "$_pkg" || true
 done
 
 # Passo 5
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando drivers GPU"
 if [ "$GPU_ENABLED" == "true" ]; then
-    if pkg install -y -q mesa-zink vulkan-loader-android >> "$LOG" 2>&1; then
+    if try_pkg mesa-zink vulkan-loader-android; then
         if [ "$GPU_DRIVER" == "freedreno" ]; then
-            pkg install -y -q mesa-vulkan-icd-freedreno >> "$LOG" 2>&1 || true
+            try_pkg mesa-vulkan-icd-freedreno || true
         fi
-        echo "Aceleração GPU instalada"
     else
-        echo "Drivers GPU não disponíveis, continuando sem aceleração"
+        echo "    Drivers GPU não disponíveis, continuando sem aceleração"
         GPU_ENABLED="false"
     fi
 else
-    echo "Modo sem aceleração GPU"
+    echo "    Modo sem aceleração GPU"
 fi
-
-pkg install -y neofetch
 
 # Passo 6
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando áudio"
-pkg install -y -q pulseaudio >> "$LOG" 2>&1
+install_pkg pulseaudio
 
 # Passo 7
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando apps"
-pkg install -y -q vlc git wget curl code-oss wol >> "$LOG" 2>&1
-if ! pkg install -y firefox >> "$LOG" 2>&1; then
-    echo "Firefox não disponível neste dispositivo"
-fi
+install_pkg vlc wget curl code-oss wol neofetch
+try_pkg firefox || echo "    Firefox não disponível neste dispositivo"
 
 # Passo 8
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Instalando Python"
-pkg install -y -q python >> "$LOG" 2>&1
+install_pkg python
 
 # Passo 9
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Configurando Wine"
-
 if [[ "$INSTALL_WINE" == "s" ]]; then
-    pkg remove -y wine-stable >> "$LOG" 2>&1
-    pkg install -y hangover-wine hangover-wowbox64 >> "$LOG" 2>&1
-
+    pkg remove -y wine-stable >> "$LOG" 2>&1 || true
+    install_pkg hangover-wine hangover-wowbox64
     ln -sf \
-    /data/data/com.termux/files/usr/opt/hangover-wine/bin/wine \
-    /data/data/com.termux/files/usr/bin/wine 2>/dev/null
-
-    echo "Wine instalado"
+        /data/data/com.termux/files/usr/opt/hangover-wine/bin/wine \
+        /data/data/com.termux/files/usr/bin/wine 2>/dev/null || true
+    echo "    Wine instalado"
 else
-    echo "Wine ignorado"
+    echo "    Wine ignorado"
 fi
 
 # Passo 10
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Criando scripts"
-cat > ~/start-linux.sh << 'EOF'
+cat > "$SCRIPT_DIR/start-linux.sh" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
 
-pkill -f termux.x11 2>/dev/null
-pkill -f "termux-x11" 2>/dev/null
-pulseaudio --kill 2>/dev/null
+pkill -9 Xwayland 2>/dev/null || true
+pkill -9 -f "termux.x11" 2>/dev/null || true
+pkill -9 -f "termux-x11" 2>/dev/null || true
+pulseaudio --kill 2>/dev/null || true
 
 sleep 1
 
@@ -327,63 +303,61 @@ am start --user 0 -n com.termux.x11/com.termux.x11.MainActivity >/dev/null 2>&1
 sleep 3
 termux-x11 :0 >/dev/null 2>&1 &
 
-sleep 2
+sleep 4
 
 export DISPLAY=:0
 EOF
 
 if [ "$GPU_ENABLED" == "true" ]; then
-    echo "export GALLIUM_DRIVER=zink" >> ~/start-linux.sh
+    echo "export GALLIUM_DRIVER=zink" >> "$SCRIPT_DIR/start-linux.sh"
 fi
 
 case $DE_INPUT in
     1)
-        echo "exec dbus-launch --exit-with-session startxfce4" >> ~/start-linux.sh
+        echo "exec dbus-launch --exit-with-session xfce4-session" >> "$SCRIPT_DIR/start-linux.sh"
     ;;
     2)
-        echo "xsetroot -solid '#2e3440'" >> ~/start-linux.sh
-        echo "exec dbus-launch --exit-with-session startlxqt" >> ~/start-linux.sh
+        echo "xsetroot -solid '#2e3440'" >> "$SCRIPT_DIR/start-linux.sh"
+        echo "exec dbus-launch --exit-with-session startlxqt" >> "$SCRIPT_DIR/start-linux.sh"
     ;;
     3)
-        echo "exec dbus-launch --exit-with-session mate-session" >> ~/start-linux.sh
+        echo "exec dbus-launch --exit-with-session mate-session" >> "$SCRIPT_DIR/start-linux.sh"
     ;;
     4)
-        echo "exec dbus-launch --exit-with-session startplasma-x11" >> ~/start-linux.sh
+        echo "exec dbus-launch --exit-with-session startplasma-x11" >> "$SCRIPT_DIR/start-linux.sh"
     ;;
 esac
 
-chmod +x ~/start-linux.sh
+chmod +x "$SCRIPT_DIR/start-linux.sh"
 
-cat > ~/stop-linux.sh << 'EOF'
+cat > "$SCRIPT_DIR/stop-linux.sh" << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
-pkill -9 -f "termux.x11" 2>/dev/null
-pkill -9 pulseaudio 2>/dev/null
+pkill -9 Xwayland 2>/dev/null || true
+pkill -9 -f "termux.x11" 2>/dev/null || true
+pkill -9 pulseaudio 2>/dev/null || true
 echo "Desktop finalizado"
 EOF
-chmod +x ~/stop-linux.sh
+chmod +x "$SCRIPT_DIR/stop-linux.sh"
 
 # Passo 11
 CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Criando atalhos"
-mkdir -p ~/Desktop
-cat > ~/Desktop/Firefox.desktop << 'EOF'
+mkdir -p "$SCRIPT_DIR/Desktop"
+cat > "$SCRIPT_DIR/Desktop/Firefox.desktop" << 'EOF'
 [Desktop Entry]
 Name=Firefox
 Exec=firefox
 Type=Application
 EOF
-chmod +x ~/Desktop/*.desktop 2>/dev/null
+chmod +x "$SCRIPT_DIR/Desktop/"*.desktop 2>/dev/null || true
 
 # ============== FINALIZAÇÃO ==============
-_stop_spinner
 neofetch
 echo ""
 echo "  ================================="
 echo "       INSTALAÇÃO CONCLUÍDA"
 echo "  ================================="
 echo ""
-echo "  Inicializando o ambiente desktop..."
+echo "  Iniciando desktop automaticamente..."
+echo "  Para iniciar o desktop manualmente, execute:"
+echo "  ./start-linux.sh"
 echo ""
-
-sleep 3
-
-bash ~/start-linux.sh
