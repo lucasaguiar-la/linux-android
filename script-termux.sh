@@ -1,6 +1,12 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -e
 
+echo ""
+echo "Solicitando permissão de armazenamento..."
+termux-setup-storage
+
+sleep 3
+
 # ============== CONFIGURAÇÃO BÁSICA ==============
 DE_CHOICE="1"
 DE_NAME="XFCE4"
