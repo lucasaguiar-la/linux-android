@@ -300,7 +300,8 @@ CURRENT=$((CURRENT+1)); print_step $CURRENT $TOTAL "Criando scripts"
 cat > ~/start-linux.sh << 'EOF'
 #!/data/data/com.termux/files/usr/bin/bash
 
-pkill -9 -f "termux.x11" 2>/dev/null
+pkill -f termux.x11 2>/dev/null
+pkill -f "termux-x11" 2>/dev/null
 pulseaudio --kill 2>/dev/null
 
 sleep 1
@@ -378,9 +379,9 @@ echo "  ================================="
 echo "       INSTALAÇÃO CONCLUÍDA"
 echo "  ================================="
 echo ""
-echo "  Iniciar : ~/start-linux.sh"
-echo "  Parar   : ~/stop-linux.sh"
+echo "  Inicializando o ambiente desktop..."
 echo ""
-echo "  Abra o app Termux-X11 para ver a interface"
-echo "  Log: $LOG"
-echo ""
+
+sleep 3
+
+bash ~/start-linux.sh
